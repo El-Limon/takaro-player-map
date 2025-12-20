@@ -3,6 +3,8 @@
 const ColorUtils = {
   // Store custom player colors (playerId -> hex color)
   customColors: {},
+  // Cache computed hashes for performance
+  hashCache: new Map(),
 
   // Load custom colors from localStorage
   init() {
@@ -58,44 +60,42 @@ const ColorUtils = {
     }
   },
 
+  // Calculate hash once and cache it
+  _getHash(playerId) {
+    const key = String(playerId);
+    if (this.hashCache.has(key)) {
+      return this.hashCache.get(key);
+    }
+
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = key.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const hue = Math.abs(hash) % 360;
+    this.hashCache.set(key, hue);
+    return hue;
+  },
+
   // Generate a consistent HSL color for a player based on their ID
   getPlayerColor(playerId) {
     // Check for custom color first
     const custom = this.getCustomColor(playerId);
     if (custom) return custom;
 
-    // Hash the player ID to get a consistent color
-    let hash = 0;
-    const str = String(playerId);
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    const hue = Math.abs(hash) % 360;
+    const hue = this._getHash(playerId);
     return `hsl(${hue}, 70%, 50%)`;
   },
 
   // Get the auto-generated color (ignoring custom)
   getAutoColor(playerId) {
-    let hash = 0;
-    const str = String(playerId);
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    const hue = Math.abs(hash) % 360;
+    const hue = this._getHash(playerId);
     return `hsl(${hue}, 70%, 50%)`;
   },
 
   // Get hue value for a player (useful for SVG styling)
   getPlayerHue(playerId) {
-    let hash = 0;
-    const str = String(playerId);
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    return Math.abs(hash) % 360;
+    return this._getHash(playerId);
   },
 
   // Offline players use gray

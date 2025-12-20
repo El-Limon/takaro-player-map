@@ -351,6 +351,9 @@ const Players = {
     }
     this.markers.clear();
     this.inventories.clear();
+    this.playerStates.clear();  // Clear cached states
+    this.iconCache.clear();  // Clear icon cache
+    this.allPlayers = [];  // Clear player data
 
     if (window.PlayerList) {
       PlayerList.clear();
