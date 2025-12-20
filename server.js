@@ -328,6 +328,35 @@ app.post('/api/players/area/radius', requireAuth, async (req, res) => {
   }
 });
 
+// Search players by item name
+app.post('/api/players/item-search', requireAuth, async (req, res) => {
+  const { gameServerId, itemName, startDate, endDate } = req.body;
+
+  if (!gameServerId) {
+    return res.status(400).json({ error: 'gameServerId required' });
+  }
+
+  if (!itemName || itemName.trim() === '') {
+    return res.status(400).json({ error: 'itemName is required' });
+  }
+
+  try {
+    const results = await req.session.takaroClient.getPlayersByItem(
+      gameServerId,
+      itemName.trim(),
+      startDate,
+      endDate
+    );
+
+    // Enrich with player names from Takaro
+    const enrichedResults = await enrichWithPlayerNames(req.session.takaroClient, results);
+
+    res.json({ data: enrichedResults });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============== START SERVER ==============
 
 async function startServer() {

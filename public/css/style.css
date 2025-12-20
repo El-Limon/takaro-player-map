@@ -899,6 +899,32 @@ body {
   color: var(--gray);
 }
 
+/* Item Search Controls */
+.item-search-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.item-search-input {
+  padding: 0.4rem 0.75rem;
+  background: var(--darker);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--light);
+  font-size: 0.85rem;
+  width: 200px;
+}
+
+.item-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.item-search-input::placeholder {
+  color: var(--gray);
+}
+
 .player-list-stats {
   display: flex;
   gap: 1rem;
