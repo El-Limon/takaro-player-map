@@ -9,8 +9,11 @@ const PlayerList = {
   collapsedGroups: { online: false, offline: false },  // Track collapsed state
   areaFilterActive: false,  // Track if area filter is active
   areaFilterPlayerIds: new Set(),  // Player IDs from area search
+  renderDebounced: null,  // Debounced render function
 
   init() {
+    // Create debounced render function
+    this.renderDebounced = window.Utils ? Utils.debounce(() => this.render(), 150) : () => this.render();
     this.setupEventListeners();
     this.restoreState();
   },
@@ -21,7 +24,7 @@ const PlayerList = {
       this.toggle();
     });
 
-    // Search input (sidebar)
+    // Search input (sidebar) - use debounced render
     document.getElementById('player-search').addEventListener('input', (e) => {
       this.searchTerm = e.target.value.toLowerCase().trim();
       // Sync with top search bar
@@ -29,10 +32,10 @@ const PlayerList = {
       if (topSearch && topSearch.value !== e.target.value) {
         topSearch.value = e.target.value;
       }
-      this.render();
+      this.renderDebounced();
     });
 
-    // Top search input (in controls bar)
+    // Top search input (in controls bar) - use debounced render
     const topSearch = document.getElementById('top-player-search');
     if (topSearch) {
       topSearch.addEventListener('input', (e) => {
@@ -42,7 +45,7 @@ const PlayerList = {
         if (sidebarSearch && sidebarSearch.value !== e.target.value) {
           sidebarSearch.value = e.target.value;
         }
-        this.render();
+        this.renderDebounced();
       });
     }
 
@@ -149,33 +152,40 @@ const PlayerList = {
     const onlineList = document.getElementById('online-players-list');
     const offlineList = document.getElementById('offline-players-list');
 
-    // Start with all players
-    let filteredPlayers = this.players;
+    // Optimize: Combine all filtering in single pass
+    const onlinePlayers = [];
+    const offlinePlayers = [];
 
-    // Apply area filter if active
-    if (this.areaFilterActive) {
-      filteredPlayers = filteredPlayers.filter(p =>
-        this.areaFilterPlayerIds.has(String(p.id)) ||
-        this.areaFilterPlayerIds.has(String(p.playerId))
-      );
+    for (const player of this.players) {
+      // Apply area filter
+      if (this.areaFilterActive) {
+        if (!this.areaFilterPlayerIds.has(String(player.id)) &&
+            !this.areaFilterPlayerIds.has(String(player.playerId))) {
+          continue;
+        }
+      }
+
+      // Apply search filter
+      if (this.searchTerm && !player.name.toLowerCase().includes(this.searchTerm)) {
+        continue;
+      }
+
+      // Separate by online/offline status
+      const isOnline = player.online === 1 || player.online === true;
+      if (isOnline) {
+        onlinePlayers.push(player);
+      } else {
+        offlinePlayers.push(player);
+      }
     }
 
-    // Then filter by search term
-    filteredPlayers = filteredPlayers.filter(player => {
-      if (!this.searchTerm) return true;
-      return player.name.toLowerCase().includes(this.searchTerm);
-    });
-
-    // Separate online and offline
-    const onlinePlayers = filteredPlayers.filter(p => p.online === 1 || p.online === true);
-    const offlinePlayers = filteredPlayers.filter(p => !(p.online === 1 || p.online === true));
-
-    // Sort alphabetically by name
+    // Sort alphabetically by name (in-place sort is faster)
     onlinePlayers.sort((a, b) => a.name.localeCompare(b.name));
     offlinePlayers.sort((a, b) => a.name.localeCompare(b.name));
 
-    // Update selected count
-    const selectedCount = filteredPlayers.filter(p => this.isSelected(p.id)).length;
+    // Update selected count (combine online and offline)
+    const allFiltered = onlinePlayers.concat(offlinePlayers);
+    const selectedCount = allFiltered.filter(p => this.isSelected(p.id)).length;
     const selectedEl = document.getElementById('panel-selected-count');
     if (selectedEl) {
       selectedEl.textContent = `${selectedCount} selected`;

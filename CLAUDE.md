@@ -46,6 +46,36 @@ git push origin feature/your-feature-name
 gh pr create --base main --head feature/your-feature-name --title "Feature: Description"
 ```
 
+## Build and Deployment
+
+### Environment
+- **Local Node Version:** Node.js 24.11.0 (Windows)
+- **Source Code:** Written for Node.js 18+ (uses native modules that need compilation)
+- **Native Modules:** better-sqlite3 requires compilation for Windows
+
+### Building for Windows Deployment
+
+The project uses native modules that must be compiled for Windows with Node 24. Follow these steps:
+
+```bash
+# 1. Copy project to Windows temp directory
+powershell.exe -Command "Copy-Item -Path '/home/zmedh/Takaro-Projects/Takaro Player Map/*' -Destination 'C:\temp\takaro-player-map' -Recurse -Force"
+
+# 2. Build on Windows with Node 24 (requires Python 3.11 and Visual Studio Build Tools)
+cmd.exe /c "set PATH=C:\Program Files\nodejs;C:\Program Files\Python311;%PATH% && set npm_config_python=C:\Program Files\Python311\python.exe && cd /d C:\temp\takaro-player-map && npm install"
+
+# 3. Copy built files to deployment location
+powershell.exe -Command "Copy-Item -Path 'C:\temp\takaro-player-map\*' -Destination '\\wsl.localhost\Ubuntu\home\zmedh\Takaro-Projects\Map Takaro' -Recurse -Force"
+```
+
+### Deployment Location
+Fully built files must be placed in:
+```
+\\wsl.localhost\Ubuntu\home\zmedh\Takaro-Projects\Map Takaro
+```
+
+**Important:** Every code change requires rebuilding on Windows before deployment.
+
 ## Current Feature Request
 
 **Goal:** Add ability to search for players by a specific item in an area.

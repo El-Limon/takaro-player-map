@@ -52,19 +52,27 @@ const Heatmap = {
       });
     }
 
-    // Radius slider
+    // Radius slider - debounced for performance
     const radiusSlider = document.getElementById('heatmap-radius');
     if (radiusSlider) {
+      const debouncedSetRadius = window.Utils
+        ? Utils.throttle((value) => this.setRadius(value), 100)
+        : (value) => this.setRadius(value);
+
       radiusSlider.addEventListener('input', (e) => {
-        this.setRadius(parseInt(e.target.value));
+        debouncedSetRadius(parseInt(e.target.value));
       });
     }
 
-    // Blur slider
+    // Blur slider - debounced for performance
     const blurSlider = document.getElementById('heatmap-blur');
     if (blurSlider) {
+      const debouncedSetBlur = window.Utils
+        ? Utils.throttle((value) => this.setBlur(value), 100)
+        : (value) => this.setBlur(value);
+
       blurSlider.addEventListener('input', (e) => {
-        this.setBlur(parseInt(e.target.value));
+        debouncedSetBlur(parseInt(e.target.value));
       });
     }
   },

@@ -4,14 +4,23 @@ const Players = {
   markers: new Map(),
   inventories: new Map(),  // Store inventory by player ID
   allPlayers: [],  // Store all players for lookup by other modules
+  playerStates: new Map(),  // Cache player states (online/offline) to avoid recreating icons
   showOnline: true,
   showOffline: true,
   selectedPlayers: new Set(),  // Track selected player IDs for visibility
   refreshInterval: null,
   gameServerId: null,
+  iconCache: new Map(),  // Cache created icons
 
-  // Create custom marker icons with player-specific colors
+  // Create custom marker icons with player-specific colors (cached)
   createIcon(online, playerId = null) {
+    const cacheKey = `${online ? 'on' : 'off'}_${playerId || 'default'}`;
+
+    // Return cached icon if available
+    if (this.iconCache.has(cacheKey)) {
+      return this.iconCache.get(cacheKey);
+    }
+
     const size = 24;
     // Online players get unique colors based on their ID, offline players are gray
     const color = online && playerId
@@ -24,12 +33,16 @@ const Players = {
         <path d="M12 14c-5 0-9 2.5-9 5v2h18v-2c0-2.5-4-5-9-5z" fill="${color}" stroke="white" stroke-width="1"/>
       </svg>`;
 
-    return L.divIcon({
+    const icon = L.divIcon({
       className: 'player-marker-container',
       html: `<div class="player-marker ${online ? 'online' : 'offline'}">${personSvg}</div>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2]
     });
+
+    // Cache the icon
+    this.iconCache.set(cacheKey, icon);
+    return icon;
   },
 
   formatPlaytime(seconds) {
@@ -171,9 +184,24 @@ const Players = {
         if (this.markers.has(player.id)) {
           // Update existing marker
           const marker = this.markers.get(player.id);
-          marker.setLatLng(pos);
-          marker.setIcon(this.createIcon(isOnline, player.playerId));
+          const previousState = this.playerStates.get(player.id);
+
+          // Only update position if it changed
+          const currentPos = marker.getLatLng();
+          if (Math.abs(currentPos.lat - pos.lat) > 0.00001 || Math.abs(currentPos.lng - pos.lng) > 0.00001) {
+            marker.setLatLng(pos);
+          }
+
+          // Only update icon if online state changed
+          if (!previousState || previousState.online !== isOnline) {
+            marker.setIcon(this.createIcon(isOnline, player.playerId));
+          }
+
+          // Update popup content (only rebuild if needed - could be optimized further)
           marker.getPopup().setContent(this.createPopupContent(player));
+
+          // Update cached state
+          this.playerStates.set(player.id, { online: isOnline });
         } else {
           // Create new marker
           const marker = L.marker(pos, {
@@ -191,6 +219,7 @@ const Players = {
 
           marker.addTo(GameMap.map);
           this.markers.set(player.id, marker);
+          this.playerStates.set(player.id, { online: isOnline });
         }
       }
 
@@ -258,15 +287,40 @@ const Players = {
   },
 
   refreshVisibility() {
-    // Remove all markers and re-add based on visibility
-    for (const [id, marker] of this.markers) {
-      marker.remove();
+    // Optimize: Don't destroy markers, just show/hide them
+    if (!this.allPlayers || this.allPlayers.length === 0) {
+      // If no player data yet, do full update
+      if (window.App && window.App.gameServerId) {
+        this.update(window.App.gameServerId);
+      }
+      return;
     }
-    this.markers.clear();
 
-    // Trigger a full update
-    if (window.App && window.App.gameServerId) {
-      this.update(window.App.gameServerId);
+    // Show/hide markers based on current visibility settings
+    for (const player of this.allPlayers) {
+      const isOnline = player.online === 1 || player.online === true;
+      const marker = this.markers.get(player.id);
+
+      if (!marker) continue;
+
+      // Determine if marker should be visible
+      let shouldShow = true;
+
+      // Check online/offline visibility
+      if (isOnline && !this.showOnline) shouldShow = false;
+      if (!isOnline && !this.showOffline) shouldShow = false;
+
+      // Check selection
+      if (this.selectedPlayers.size > 0 && !this.selectedPlayers.has(String(player.id))) {
+        shouldShow = false;
+      }
+
+      // Show or hide marker
+      if (shouldShow && !GameMap.map.hasLayer(marker)) {
+        marker.addTo(GameMap.map);
+      } else if (!shouldShow && GameMap.map.hasLayer(marker)) {
+        marker.remove();
+      }
     }
   },
 
