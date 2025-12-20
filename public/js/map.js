@@ -28,7 +28,7 @@ L.GridLayer.SDTD = L.GridLayer.extend({
       .replace('{x}', x)
       .replace('{y}', y);
 
-    console.log(`Tile: z=${coords.z} leaflet(${coords.x},${coords.y}) -> 7d2d(${x},${y})`);
+    // Removed console.log for performance
 
     tile.onload = () => done(null, tile);
     tile.onerror = () => { tile.src = ''; done(null, tile); };
@@ -113,17 +113,27 @@ const GameMap = {
     // Add grid overlay (optional)
     this.addGridLayer();
 
-    // Add coordinate display on mouse move
-    this.map.on('mousemove', (e) => {
-      const coords = this.latLngToGame(e.latlng);
-      document.getElementById('cursor-coords').textContent =
-        `X: ${coords.x}, Z: ${coords.z}`;
-    });
+    // Add coordinate display on mouse move (throttled for performance)
+    const updateCoords = window.Utils
+      ? Utils.throttle((e) => {
+          const coords = this.latLngToGame(e.latlng);
+          document.getElementById('cursor-coords').textContent =
+            `X: ${coords.x}, Z: ${coords.z}`;
+        }, 100)
+      : (e) => {
+          const coords = this.latLngToGame(e.latlng);
+          document.getElementById('cursor-coords').textContent =
+            `X: ${coords.x}, Z: ${coords.z}`;
+        };
 
-    // Save map state on view change
-    this.map.on('moveend', () => {
-      this.saveState();
-    });
+    this.map.on('mousemove', updateCoords);
+
+    // Save map state on view change (debounced for performance)
+    const saveStateDebounced = window.Utils
+      ? Utils.debounce(() => this.saveState(), 500)
+      : () => this.saveState();
+
+    this.map.on('moveend', saveStateDebounced);
 
     // Restore saved state
     this.restoreState();
