@@ -9,6 +9,9 @@ node_modules/
 # Data files
 data/
 
+# Local deployment folder
+Map Takaro/
+
 # IDE
 .vscode/
 .idea/
@@ -26,3 +29,4 @@ npm-debug.log*
 
 # Claude Code
 .claude/
+CLAUDE.md

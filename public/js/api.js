@@ -162,6 +162,20 @@ const API = {
     return data.data || [];
   },
 
+  // Search players by item name
+  async getPlayersByItem(gameServerId, itemName, startDate, endDate) {
+    const data = await this.request('/api/players/item-search', {
+      method: 'POST',
+      body: JSON.stringify({
+        gameServerId,
+        itemName,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
+      })
+    });
+    return data.data || [];
+  },
+
   // Death Events (for heatmap)
   async getDeathEvents(gameServerId, startDate, endDate) {
     let url = `/api/events/deaths?gameServerId=${gameServerId}`;

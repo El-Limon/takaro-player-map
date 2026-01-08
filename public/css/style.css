@@ -88,7 +88,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  transition: background-color 0.2s, opacity 0.2s;
 }
 
 .btn-primary {
@@ -678,12 +678,7 @@ body {
 .player-marker.online {
   background: var(--online-color);
   filter: drop-shadow(0 0 6px var(--online-color));
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { filter: drop-shadow(0 0 4px var(--online-color)); }
-  50% { filter: drop-shadow(0 0 10px var(--online-color)); }
+  /* Removed continuous animation for performance */
 }
 
 .player-marker.offline {
@@ -896,6 +891,32 @@ body {
 }
 
 .player-search::placeholder {
+  color: var(--gray);
+}
+
+/* Item Search Controls */
+.item-search-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.item-search-input {
+  padding: 0.4rem 0.75rem;
+  background: var(--darker);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--light);
+  font-size: 0.85rem;
+  width: 200px;
+}
+
+.item-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.item-search-input::placeholder {
   color: var(--gray);
 }
 

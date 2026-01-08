@@ -85,6 +85,11 @@ const AreaSearch = {
     if (this.onSearchComplete) {
       this.onSearchComplete(results);
     }
+
+    // If there's an active item search, re-run it with the new area filter
+    if (window.ItemSearch && ItemSearch.currentItemName) {
+      await ItemSearch.performSearch();
+    }
   },
 
   async search(gameServerId, startDate, endDate) {

@@ -54,12 +54,11 @@ const History = {
   drawPaths() {
     if (!GameMap.map) return;
 
-    // Clear existing path layers
-    this.clearPaths();
-
     // Get selected player Takaro IDs from PlayerList if available
-    // Note: paths use playerId (Player UUID) as keys, but selectedPlayers uses POG IDs
     const selectedTakaroIds = window.PlayerList ? PlayerList.getSelectedTakaroIds() : null;
+
+    // Optimize: Only update paths that changed, don't redraw everything
+    const playerIdsToShow = new Set();
 
     for (const [playerId, data] of Object.entries(this.paths)) {
       if (!data.points || data.points.length < 2) continue;
@@ -69,8 +68,28 @@ const History = {
         continue;
       }
 
+      playerIdsToShow.add(playerId);
+
+      // If path already exists and is visible, skip
+      if (this.pathLayers.has(playerId)) {
+        const layer = this.pathLayers.get(playerId);
+        if (GameMap.map.hasLayer(layer)) {
+          continue; // Already showing, no need to redraw
+        } else {
+          layer.addTo(GameMap.map);
+          continue;
+        }
+      }
+
+      // Create new path with simplified points for better performance
       const color = this.getPlayerColor(playerId);
-      const latlngs = data.points.map(p => GameMap.gameToLatLng(p.x, p.z));
+
+      // Simplify path if it has many points
+      const points = data.points.length > 100 && window.Utils
+        ? Utils.simplifyPath(data.points, 0.0001)
+        : data.points;
+
+      const latlngs = points.map(p => GameMap.gameToLatLng(p.x, p.z));
 
       const polyline = L.polyline(latlngs, {
         color: color,
@@ -84,6 +103,15 @@ const History = {
 
       polyline.addTo(GameMap.map);
       this.pathLayers.set(playerId, polyline);
+    }
+
+    // Hide paths for unselected players
+    for (const [playerId, layer] of this.pathLayers) {
+      if (!playerIdsToShow.has(playerId)) {
+        if (GameMap.map.hasLayer(layer)) {
+          layer.remove();
+        }
+      }
     }
   },
 

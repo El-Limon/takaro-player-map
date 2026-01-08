@@ -139,6 +139,17 @@
           </button>
         </div>
 
+        <div class="control-group item-search-controls">
+          <input type="text" id="item-search-input" class="item-search-input" placeholder="Search by item name..." />
+          <button id="item-search-btn" class="btn btn-secondary" title="Search for players with this item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"/>
+              <line x1="16" y1="16" x2="21" y2="21"/>
+            </svg>
+            Item
+          </button>
+        </div>
+
         <div class="control-group">
           <button id="refresh-btn" class="btn btn-secondary">
             &#8635; Refresh
@@ -267,6 +278,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="js/utils.js"></script>
   <script src="js/colorUtils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
@@ -275,6 +287,7 @@
   <script src="js/history.js"></script>
   <script src="js/heatmap.js"></script>
   <script src="js/areaSearch.js"></script>
+  <script src="js/itemSearch.js"></script>
   <script src="js/playerList.js"></script>
   <script src="js/playerInfo.js"></script>
   <script src="js/timeRange.js"></script>

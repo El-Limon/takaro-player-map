@@ -184,6 +184,11 @@ const App = {
       }
     });
 
+    // Initialize item search
+    if (window.ItemSearch) {
+      ItemSearch.init(gameServerId);
+    }
+
     // Initialize heatmap module
     if (window.Heatmap) {
       Heatmap.init(gameServerId);
@@ -198,6 +203,11 @@ const App = {
     History.clearPaths();
     History.stopPlayback();
     AreaSearch.clear();
+
+    // Clear item search
+    if (window.ItemSearch) {
+      ItemSearch.clear();
+    }
 
     // Clear heatmap
     if (window.Heatmap) {
